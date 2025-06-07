@@ -1,0 +1,6 @@
+@media (max-width: 768px) {
+    .language-selector {
+        display: flex;
+        justify-content: center;
+    }
+}
