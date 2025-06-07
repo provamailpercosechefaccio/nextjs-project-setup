@@ -1,0 +1,894 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f8fafc}
+        .dashboard-card,.kpi-card{background-color:#fff;border-radius:.75rem;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);transition:all .3s ease}
+        .dashboard-card:hover,.kpi-card:hover,.data-card:hover{box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);transform:translateY(-2px)}
+        .kpi-card{position:relative;overflow:hidden}
+        .kpi-icon-wrapper{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+        .kpi-icon{font-size:1rem}
+        .trend-up{color:#10b981}.trend-down{color:#ef4444}
+        .chart-container{position:relative;height:400px;min-height:400px;width:100%;display:block}
+        .time-period-selector{display:flex;gap:.5rem;margin-bottom:1rem}
+        .financial-result{display:flex;align-items:center;justify-content:center;padding:1rem;border-radius:.5rem;font-weight:700;font-size:1.25rem}
+        .financial-result.profit{background-color:rgba(16,185,129,.1);color:#10b981}
+        .financial-result.loss{background-color:rgba(239,68,68,.1);color:#ef4444}
+        .income-value-container{display:flex;align-items:center}
+        .balance-sheet{display:flex;flex-direction:column;gap:1rem}
+        .balance-item{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #e5e7eb}
+        .balance-item:last-child{border-bottom:none}
+        .year-selector{display:flex;position:relative;background-color:#f3f4f6;border-radius:1.5rem;padding:.15rem;margin-bottom:1.5rem}
+        .year-option{flex:1;text-align:center;padding:.4rem 0;cursor:pointer;position:relative;z-index:1;transition:all .3s ease;color:#4b5563;border-radius:1.25rem;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+        .year-option.active-blue{background-color:#3b82f6;color:#fff;font-weight:600;box-shadow:0 2px 4px rgba(59,130,246,.3)}
+        .year-option.active-orange{background-color:#f97316;color:#fff;font-weight:600;box-shadow:0 2px 4px rgba(249,115,22,.3)}
+        .btn-default{background-color:#f3f4f6;color:#4b5563}
+        .btn-blue{background-color:#3b82f6;color:#fff}
+        .btn-orange{background-color:#f97316;color:#fff}
+        .map-placeholder{height:400px;background-color:#f3f4f6;border-radius:.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6b7280;overflow:hidden}
+        .globe-icon{width:36px;height:36px;background-color:#dbeafe;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1e40af;cursor:pointer;transition:all 0.3s ease}
+        .globe-icon:hover{background-color:#bfdbfe;transform:scale(1.05)}
+        .growth-label{font-size:.7rem;color:#6b7280;margin-left:.25rem}
+        .map-container{width:100%;border-radius:.5rem;overflow:hidden}
+        .map-year{display:none}
+        .map-year.active{display:block}
+        .code-container{margin-top:2rem;padding:1rem;background-color:#f8fafc;border-radius:.75rem;border:1px solid #e5e7eb}
+        .code-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #e5e7eb}
+        .code-textarea{width:100%;height:200px;padding:1rem;border:1px solid #e5e7eb;border-radius:.5rem;font-family:monospace;font-size:.875rem;resize:vertical;background-color:#fff}
+        .copy-btn{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background-color:#3b82f6;color:#fff;border-radius:.5rem;font-weight:500;cursor:pointer;transition:all .2s ease}
+        .copy-btn:hover{background-color:#2563eb}
+        .copy-success{background-color:#10b981}
+        .year-data-section{margin-top:1.5rem}
+        .financial-metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem}
+        .total-assets{color:#10b981;font-weight:bold}
+        .total-liabilities{color:#ef4444;font-weight:bold}
+        .sales-growth-value{color:#10b981;font-weight:bold}
+        .data-card{background-color:#fff;border-radius:.75rem;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);padding:1rem;transition:all .3s ease}
+        .data-card.green-bg{background-color:rgba(16,185,129,.05)}
+        .data-card.red-bg{background-color:rgba(239,68,68,.05)}
+        .language-selector{position:relative;z-index:50}
+        .language-dropdown{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background-color:#fff;border-radius:0.75rem;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);padding:0.75rem;min-width:120px;display:none;z-index:50}
+        .language-dropdown.show{display:flex;gap:0.75rem;justify-content:center}
+        .flag-option{display:flex;align-items:center;justify-content:center;padding:0.25rem;border-radius:50%;cursor:pointer;transition:all 0.2s ease;width:40px;height:40px}
+        .flag-option:hover{transform:scale(1.1);box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+        .flag-option.active{box-shadow:0 0 0 2px #3b82f6}
+        .flag-icon{width:100%;height:100%;border-radius:50%;object-fit:cover;box-shadow:0 1px 2px rgba(0,0,0,0.1)}
+        .dashboard-content,.year-data-container{transition:opacity .3s ease,transform .3s ease}
+        .dashboard-content.fade-out,.year-data-container.fade-out{opacity:0;transform:translateY(10px)}
+        .dashboard-content.fade-in,.year-data-container.fade-in{opacity:1;transform:translateY(0)}
+        .dashboard-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+        .header-title{flex-grow:0;text-align:left}
+        .header-controls{display:flex;align-items:center;gap:1rem}
+        .money-toggle-container{display:flex;align-items:center;gap:.75rem;background-color:#f3f4f6;border-radius:.75rem;padding:.25rem}
+        .money-toggle-label{font-size:.875rem;font-weight:500;color:#4b5563;cursor:pointer;padding:.25rem .75rem;border-radius:.5rem;transition:all .3s ease}
+        .money-toggle-label.active[data-money-type="pre"]{background-color:#3b82f6;color:white;box-shadow:0 2px 4px rgba(59,130,246,.3)}
+        .money-toggle-label.active[data-money-type="post"]{background-color:#f97316;color:white;box-shadow:0 2px 4px rgba(249,115,22,.3)}
+        .money-toggle-badge{display:inline-flex;align-items:center;justify-content:center;background-color:rgba(16,185,129,.1);color:#10b981;font-size:.7rem;font-weight:600;padding:.15rem .5rem;border-radius:1rem;margin-left:.5rem}
+        @media (max-width:768px){.financial-metrics-grid{grid-template-columns:repeat(2,1fr)}.financial-statements-grid{grid-template-columns:1fr}.dashboard-header{flex-direction:column;align-items:flex-start;gap:1rem}.header-controls{width:100%;justify-content:flex-end}}
+        @media (max-width:640px){.financial-metrics-grid{grid-template-columns:1fr}.header-controls{width:100%;flex-direction:column;align-items:flex-start}.money-toggle-container{width:100%;justify-content:center}}
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-6{margin-top:1.5rem}.flex{display:flex}.grid{display:grid}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.rounded-md{border-radius:0.375rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.text-center{text-align:center}.text-2xl{font-size:1.5rem;line-height:2rem}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.text-blue-500{--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-green-600{--tw-text-opacity:1;color:rgb(22 163 74 / var(--tw-text-opacity, 1))}.text-orange-500{--tw-text-opacity:1;color:rgb(249 115 22 / var(--tw-text-opacity, 1))}@media (min-width: 768px){.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}@media (min-width: 1024px){.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}}</style></head>
+<body class="p-4">
+    <div class="container mx-auto">
+        <header class="dashboard-header">
+            <div class="header-title">
+                <img src="https://i.ibb.co/spjZSR2p/clea-colori.png" alt="Clea Logo" class="mb-4" style="width: auto; height: 80px;">
+                <p class="text-gray-600" data-translate="subtitle">Business performance overview</p>
+            </div>
+            <div class="header-controls">
+                <div class="money-toggle-container">
+                    <div id="preMoneyToggle" class="money-toggle-label active" data-money-type="pre" data-translate="preMoney">Pre Money</div>
+                    <div id="postMoneyToggle" class="money-toggle-label" data-money-type="post" data-translate="postMoney">Post Money</div>
+                </div>
+                <div id="languageSelector" class="language-selector">
+                    <div class="globe-icon" id="globeIcon"><i class="fas fa-globe"></i></div>
+                    <div id="languageDropdown" class="language-dropdown">
+                        <div class="flag-option active" data-lang="en">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCAzMCI+CjxjbGlwUGF0aCBpZD0idCI+Cjxwb2x5Z29uIHBvaW50cz0iMzAsMTUgNjAsMTUgNjAsMzAgMzAsMzAgMCwzMCAwLDE1IDAsMCAxNSwwIDMwLDAiLz4KPC9jbGlwUGF0aD4KPHBhdGggZD0iTTAsMCB2MzAgaDYwIHYtMzAgeiIgZmlsbD0iIzAwMjQ3ZCIvPgo8cGF0aCBkPSJNMCwwIEw2MCwzMCBNNjAsMCBMMCwzMCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjYiLz4KPHBhdGggZD0iTTAsMCBMNjAsMzAgTTYwLDAgTDAsMzAiIGNsaXAtcGF0aD0idXJsKCN0KSIgc3Ryb2tlPSIjY2YxNDJiIiBzdHJva2Utd2lkdGg9IjQiLz4KPHBhdGggZD0iTTMwLDAgdjMwIE0wLDE1IGg2MCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEwIi8+CjxwYXRoIGQ9Ik0zMCwwIHYzMCBNMCwxNSBoNjAiIHN0cm9rZT0iI2NmMTQyYiIgc3Ryb2tlLXdpZHRoPSI2Ii8+Cjwvc3ZnPgo=" alt="English" class="flag-icon">
+                        </div>
+                        <div class="flag-option" data-lang="it">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIDBoM3YySDB6Ii8+PHBhdGggZmlsbD0iIzAwOTI0NiIgZD0iTTAgMGgxdjJIMHoiLz48cGF0aCBmaWxsPSIjY2UyYjM3IiBkPSJNMiAwaDF2MkgyeiIvPjwvc3ZnPg==" alt="Italiano" class="flag-icon">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div id="dashboardContent" class="dashboard-content fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="kpi-card p-4" id="rcrCard">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1" data-translate="rcr">Recycled Content Ratio</h3>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p id="rcrValue" class="text-2xl font-bold text-gray-800">70%</p>
+                            <div class="flex items-center mt-1">
+                                <span class="text-sm font-medium text-gray-600 whitespace-pre-line" data-translate="rcrDescription">Quantità di materiale
+riciclato nel prodotto</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon-wrapper" style="background-color:rgba(5,150,105,.15); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-recycle kpi-icon text-green-600" style="font-size: 1.25rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card p-4" id="totalSalesCard">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1" data-translate="totalSales">Total Sales</h3>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p id="totalSales" class="text-2xl font-bold text-gray-800">25,460</p>
+                            <div class="flex items-center mt-1">
+                                <span class="text-sm font-medium text-gray-600" style="margin-top: 0.75rem;" data-translate="unitsSold5Years">Units sold in 5 years</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon-wrapper" style="background-color:rgba(59,130,246,.15); width: 36px; height: 36px;">
+                            <i class="fas fa-box-open kpi-icon text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card p-4" id="totalRevenueCard">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1" data-translate="totalRevenue">Total Revenue</h3>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p id="totalRevenue" class="text-2xl font-bold text-gray-800">€9,165,345.40</p>
+                            <div class="flex items-center mt-1">
+                                <span class="text-sm font-medium text-gray-600" style="margin-top: 0.75rem;" data-translate="revenue5Years">Revenue generated in 5 years</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon-wrapper" style="background-color:rgba(249,115,22,.15); width: 36px; height: 36px;">
+                            <i class="fas fa-euro-sign kpi-icon text-orange-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card p-4" id="salesGrowthCard">
+                    <h3 class="text-sm font-medium text-gray-500 mb-1" data-translate="salesGrowth">Sales Growth</h3>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p id="salesGrowth" class="text-2xl font-bold sales-growth-value">+152%</p>
+                            <div class="flex items-center mt-1">
+                                <span class="text-sm font-medium text-gray-600" style="margin-top: 0.75rem;" data-translate="fromFirstToLastYear">From first to last year</span>
+                            </div>
+                        </div>
+                        <div class="kpi-icon-wrapper" style="background-color:rgba(249,115,22,.15); width: 36px; height: 36px;">
+                            <i class="fas fa-chart-line kpi-icon text-orange-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 gap-6 mb-6">
+                <div class="dashboard-card p-4" id="chartCard">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800" data-translate="salesAndRevenue">Sales &amp; Revenue</h2>
+                        <div class="time-period-selector">
+                            <button id="annualBtn" class="px-3 py-1 text-sm btn-blue rounded-md" data-translate="annual">Annual</button>
+                            <button id="quarterlyBtn" class="px-3 py-1 text-sm btn-default rounded-md" data-translate="quarterly">Quarterly</button>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                        <canvas id="salesRevenueChart" style="width: 100%; height: 100%;"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card p-4 year-data-section">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4" data-translate="dataByYear">Data by Year</h2>
+                    <div class="year-selector mb-4">
+                        <div class="year-option active-blue" data-year="2025" data-color="blue">2025</div>
+                        <div class="year-option" data-year="2026" data-color="orange">2026</div>
+                        <div class="year-option" data-year="2027" data-color="blue">2027</div>
+                        <div class="year-option" data-year="2028" data-color="orange">2028</div>
+                        <div class="year-option" data-year="2029" data-color="blue">2029</div>
+                    </div>
+                    <div id="yearDataContainer" class="year-data-container fade-in">
+                        <div class="financial-metrics-grid mb-4">
+                            <div class="data-card green-bg" id="yearSalesCard">
+                                <h3 class="text-sm font-medium text-gray-600 mb-1" data-translate="sales">Sales</h3>
+                                <p id="yearSales" class="text-xl font-bold text-gray-800">3,273</p>
+                                <div id="yearSalesGrowth" class="flex items-center mt-1"><span class="text-sm font-medium text-gray-600">Base year</span></div>
+                            </div>
+                            <div class="data-card red-bg" id="yearRevenueCard">
+                                <h3 class="text-sm font-medium text-gray-600 mb-1" data-translate="revenue">Revenue</h3>
+                                <p id="yearRevenue" class="text-xl font-bold text-gray-800">€1,178,247.27</p>
+                                <div id="yearRevenueGrowth" class="flex items-center mt-1"><span class="text-sm font-medium text-gray-600">Base year</span></div>
+                            </div>
+                            <div class="data-card green-bg" id="yearROICard">
+                                <h3 class="text-sm font-medium text-gray-600 mb-1">ROI</h3>
+                                <p id="yearROI" class="text-xl font-bold text-gray-800">-61.62%</p>
+                                <div id="yearROIGrowth" class="flex items-center mt-1"><span class="text-sm font-medium text-gray-600">Base year</span></div>
+                            </div>
+                            <div class="data-card red-bg" id="yearROECard">
+                                <h3 class="text-sm font-medium text-gray-600 mb-1">ROE</h3>
+                                <p id="yearROE" class="text-xl font-bold text-gray-800">-57.47%</p>
+                                <div id="yearROEGrowth" class="flex items-center mt-1"><span class="text-sm font-medium text-gray-600">Base year</span></div>
+                            </div>
+                            <div class="data-card green-bg" id="yearSGRCard">
+                                <h3 class="text-xs font-medium text-gray-600 mb-1" data-translate="sgr">Crescita delle Vendite</h3>
+                                <p id="yearSGR" class="text-xl font-bold text-gray-800">N/A</p>
+                                <div id="yearSGRGrowth" class="flex items-center mt-1"><span class="text-sm font-medium text-gray-600">Base year</span></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 financial-statements-grid">
+                            <div class="dashboard-card p-3" id="incomeStatementCard">
+                                <h3 class="text-sm font-medium text-gray-500 mb-2" data-translate="incomeStatement">Income Statement</h3>
+                                <div>
+                                    <div class="balance-item" id="totalProductionValueItem">
+                                        <span class="text-gray-600" data-translate="totalProductionValue">Total Production Value</span>
+                                        <span id="totalProductionValue" class="font-medium">€1,178,247.27</span>
+                                    </div>
+                                    <div class="balance-item" id="totalProductionCostsItem">
+                                        <span class="text-gray-600" data-translate="totalProductionCosts">Total Production Costs</span>
+                                        <span id="totalProductionCosts" class="font-medium">€1,266,160.15</span>
+                                    </div>
+                                    <div class="balance-item" id="financialIncomeExpensesItem">
+                                        <span class="text-gray-600" data-translate="financialIncomeExpenses">Financial Income and Expenses</span>
+                                        <span id="financialIncomeExpenses" class="font-medium">€16,097.56</span>
+                                    </div>
+                                    <div class="balance-item" id="grossProfitItem">
+                                        <span class="text-gray-600" data-translate="grossProfit">Gross Profit</span>
+                                        <span id="grossProfit" class="font-medium">-€104,010.44</span>
+                                    </div>
+                                    <div id="previousYearLossItem" class="balance-item" style="display: none;">
+                                        <span class="text-gray-600" data-translate="previousYearLoss">Previous Year Loss</span>
+                                        <span id="previousYearLoss" class="font-medium">€ 0.00</span>
+                                    </div>
+                                    <div class="balance-item" id="earningsBeforeTaxesItem">
+                                        <span class="text-gray-600" data-translate="earningsBeforeTaxes">Earnings before taxes</span>
+                                        <span id="earningsBeforeTaxes" class="font-medium">-€104,010.44</span>
+                                    </div>
+                                    <div class="balance-item" id="incomeTaxesItem">
+                                        <span class="text-gray-600" data-translate="incomeTaxes">Income Taxes for the year</span>
+                                        <span id="incomeTaxes" class="font-medium">€0.00</span>
+                                    </div>
+                                    <div class="balance-item" id="operatingResultItem">
+                                        <span class="font-medium text-gray-800" data-translate="operatingResult">Operating Result</span>
+                                        <div id="operatingResult" class="financial-result loss px-2 py-1 text-base">
+                                            <span id="operatingResultValue">-€104,010.44</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dashboard-card p-3" id="balanceSheetCard">
+                                <h3 class="text-sm font-medium text-gray-500 mb-2" data-translate="balanceSheet">Balance Sheet</h3>
+                                <div class="balance-sheet">
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500 mb-1" data-translate="assets">ASSETS</h4>
+                                        <div class="balance-item" id="totalFixedAssetsItem">
+                                            <span class="text-gray-600" data-translate="totalFixedAssets">Total Fixed Assets</span>
+                                            <span id="totalFixedAssets" class="font-medium">€972,054.00</span>
+                                        </div>
+                                        <div class="balance-item" id="totalWorkingCapitalItem">
+                                            <span class="text-gray-600" data-translate="totalWorkingCapital">Total Working Capital</span>
+                                            <span id="totalWorkingCapital" class="font-medium">€648,036.00</span>
+                                        </div>
+                                        <div class="balance-item" id="totalAssetsItem">
+                                            <span class="font-medium text-gray-800" data-translate="totalAssets">Total Assets</span>
+                                            <span id="balanceTotalAssets" class="total-assets">€1,620,090.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <h4 class="text-xs font-medium text-gray-500 mb-1" data-translate="liabilities">LIABILITIES</h4>
+                                        <div class="balance-item" id="totalEquityItem">
+                                            <span class="text-gray-600" data-translate="totalEquity">Total Equity</span>
+                                            <span id="totalEquity" class="font-medium">€777,643.20</span>
+                                        </div>
+                                        <div class="balance-item" id="severancePayItem">
+                                            <span class="text-gray-600" data-translate="severancePay">Severance Pay</span>
+                                            <span id="severancePay" class="font-medium">€162,009.00</span>
+                                        </div>
+                                        <div class="balance-item" id="debtsItem">
+                                            <span class="text-gray-600" data-translate="debts">Debts</span>
+                                            <span id="debts" class="font-medium">€680,437.80</span>
+                                        </div>
+                                        <div class="balance-item" id="totalLiabilityItem">
+                                            <span class="font-medium text-gray-800" data-translate="totalLiability">Total Liability</span>
+                                            <span id="balanceTotalLiability" class="total-liabilities">€1,620,090.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card p-4" id="globalDistributionCard">
+                            <h3 class="text-sm font-medium text-gray-500 mb-2" data-translate="globalDistribution">Global Distribution</h3>
+                            <p class="text-sm text-gray-600 mb-3" id="distributionText">Italy: 65% | Europe: 25% | Rest of the world: 10%</p>
+                            <div class="map-container" id="mapContainer">
+                                <div class="map-year active" data-year="2025" id="map2025">
+                                    <iframe title="2025" aria-label="Map" id="datawrapper-chart-BxfBv" src="https://datawrapper.dwcdn.net/BxfBv/2/" scrolling="no" frameborder="0" style="width:0;min-width:100%!important;border:none;" height="400" data-external="1"></iframe><script>!function(){"use strict";window.addEventListener("message",(function(a){if(void 0!==a.data["datawrapper-height"]){var e=document.querySelectorAll("iframe");for(var t in a.data["datawrapper-height"])for(var r=0;r<e.length;r++){if(e[r].contentWindow===a.source){var i=a.data["datawrapper-height"][t]+"px";e[r].style.height=i}}}}))}();</script>
+                                </div>
+                                <div class="map-year" data-year="2026" id="map2026">
+                                    <iframe title="2026" aria-label="Map" id="datawrapper-chart-ULIS4" src="https://datawrapper.dwcdn.net/ULIS4/1/" scrolling="no" frameborder="0" style="width:0;min-width:100%!important;border:none;" height="400" data-external="1"></iframe><script>!function(){"use strict";window.addEventListener("message",(function(a){if(void 0!==a.data["datawrapper-height"]){var e=document.querySelectorAll("iframe");for(var t in a.data["datawrapper-height"])for(var r=0;r<e.length;r++){if(e[r].contentWindow===a.source){var i=a.data["datawrapper-height"][t]+"px";e[r].style.height=i}}}}))}();</script>
+                                </div>
+                                <div class="map-year" data-year="2027" id="map2027">
+                                    <iframe title="2027" aria-label="Map" id="datawrapper-chart-AjdDB" src="https://datawrapper.dwcdn.net/AjdDB/1/" scrolling="no" frameborder="0" style="width:0;min-width:100%!important;border:none;" height="400" data-external="1"></iframe><script>!function(){"use strict";window.addEventListener("message",(function(a){if(void 0!==a.data["datawrapper-height"]){var e=document.querySelectorAll("iframe");for(var t in a.data["datawrapper-height"])for(var r=0;r<e.length;r++){if(e[r].contentWindow===a.source){var i=a.data["datawrapper-height"][t]+"px";e[r].style.height=i}}}}))}();</script>
+                                </div>
+                                <div class="map-year" data-year="2028" id="map2028">
+                                    <iframe title="2028" aria-label="Map" id="datawrapper-chart-3KFBc" src="https://datawrapper.dwcdn.net/3KFBc/1/" scrolling="no" frameborder="0" style="width:0;min-width:100%!important;border:none;" height="400" data-external="1"></iframe><script>!function(){"use strict";window.addEventListener("message",(function(a){if(void 0!==a.data["datawrapper-height"]){var e=document.querySelectorAll("iframe");for(var t in a.data["datawrapper-height"])for(var r=0;r<e.length;r++){if(e[r].contentWindow===a.source){var i=a.data["datawrapper-height"][t]+"px";e[r].style.height=i}}}}))}();</script>
+                                </div>
+                                <div class="map-year" data-year="2029" id="map2029">
+                                    <iframe title="2029" aria-label="Map" id="datawrapper-chart-pNrOH" src="https://datawrapper.dwcdn.net/pNrOH/1/" scrolling="no" frameborder="0" style="width:0;min-width:100%!important;border:none;" height="400" data-external="1"></iframe><script>!function(){"use strict";window.addEventListener("message",(function(a){if(void 0!==a.data["datawrapper-height"]){var e=document.querySelectorAll("iframe");for(var t in a.data["datawrapper-height"])for(var r=0;r<e.length;r++){if(e[r].contentWindow===a.source){var i=a.data["datawrapper-height"][t]+"px";e[r].style.height=i}}}}))}();</script>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="year-selector mt-4">
+                            <div class="year-option active-blue" data-year="2025" data-color="blue">2025</div>
+                            <div class="year-option" data-year="2026" data-color="orange">2026</div>
+                            <div class="year-option" data-year="2027" data-color="blue">2027</div>
+                            <div class="year-option" data-year="2028" data-color="orange">2028</div>
+                            <div class="year-option" data-year="2029" data-color="blue">2029</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="code-container">
+                    <div class="code-header">
+                        <h3 class="text-lg font-semibold text-gray-800" data-translate="htmlCode">HTML Code</h3>
+                        <button id="copyBtn" class="copy-btn">
+                            <i class="fas fa-copy"></i>
+                            <span data-translate="copyCode">Copy Code</span>
+                        </button>
+                    </div>
+                    <textarea id="codeTextarea" class="code-textarea" readonly=""></textarea>
+                </div>
+            </div>
+        </div>
+        <footer class="text-center text-gray-500 text-sm mt-6">
+            <p data-translate="footer">© 2023 Business Dashboard - Created with Chart.js and Tailwind CSS</p>
+        </footer>
+    </div>
+    <script>
+        const UNIT_PRICE=359.99,distributionData={"2025":"Italia: 65% | Europa: 25% | Resto del mondo: 10%","2026":"Italia: 60% | Europa: 28% | Resto del mondo: 12%","2027":"Italia: 55% | Europa: 30% | Resto del mondo: 15%","2028":"Italia: 50% | Europa: 32% | Resto del mondo: 18%","2029":"Italia: 45% | Europa: 35% | Resto del mondo: 20%"},distributionDataEN={"2025":"Italy: 65% | Europe: 25% | Rest of the world: 10%","2026":"Italy: 60% | Europe: 28% | Rest of the world: 12%","2027":"Italy: 55% | Europe: 30% | Rest of the world: 15%","2028":"Italy: 50% | Europe: 32% | Rest of the world: 18%","2029":"Italy: 45% | Europe: 35% | Rest of the world: 20%"},translations={it:{title:"Dashboard Aziendale",subtitle:"Panoramica delle performance aziendali",rcr:"Indice di materiale riciclato",rcrDescription:"Quantità di materiale riciclato usato nel prodotto",totalSales:"Vendite Totali",unitsSold5Years:"Unità vendute in 5 anni",totalRevenue:"Ricavi Totali",revenue5Years:"Ricavi generati in 5 anni",salesGrowth:"Crescita delle Vendite",fromFirstToLastYear:"Dal primo all'ultimo anno",salesAndRevenue:"Vendite e Ricavi",annual:"Annuale",quarterly:"Trimestrale",dataByYear:"Dati per anno",sales:"Vendite",revenue:"Ricavi",baseYear:"Anno base",vsPrevYear:"vs anno prec.",incomeStatement:"Conto Economico",totalProductionValue:"Valore della Produzione",totalProductionCosts:"Costi della Produzione",financialIncomeExpenses:"Proventi e Oneri Finanziari",grossProfit:"Utile Lordo",earningsBeforeTaxes:"Risultato Prima delle Imposte",incomeTaxes:"Imposte dell'Esercizio",operatingResult:"Risultato di Esercizio",previousYearLoss:"Perdita dell'anno precedente",balanceSheet:"Stato Patrimoniale",assets:"ATTIVITÀ",totalFixedAssets:"Totale Immobilizzazioni",totalWorkingCapital:"Totale Capitale Circolante",totalAssets:"Totale Attività",liabilities:"PASSIVITÀ",totalEquity:"Totale Patrimonio Netto",severancePay:"TFR",debts:"Debiti",totalLiability:"Totale del Passivo",globalDistribution:"Distribuzione Globale",htmlCode:"Codice HTML",copyCode:"Copia Codice",copied:"Copiato!",italian:"Italiano",english:"Inglese",footer:"© 2023 Dashboard Aziendale - Creato con Chart.js e Tailwind CSS",salesUnits:"Vendite (unità)",revenueEuro:"Ricavi (€)",preMoney:"Pre Money",postMoney:"Post Money"},en:{title:"Business Dashboard",subtitle:"Business performance overview",rcr:"Recycled Content Ratio",rcrDescription:"Amount of recycled material used in the product",totalSales:"Total Sales",unitsSold5Years:"Units sold in 5 years",totalRevenue:"Total Revenue",revenue5Years:"Revenue generated in 5 years",salesGrowth:"Sales Growth",fromFirstToLastYear:"From first to last year",salesAndRevenue:"Sales & Revenue",annual:"Annual",quarterly:"Quarterly",dataByYear:"Data by Year",sales:"Sales",revenue:"Revenue",baseYear:"Base year",vsPrevYear:"vs prev. year",incomeStatement:"Income Statement",totalProductionValue:"Total Production Value",totalProductionCosts:"Total Production Costs",financialIncomeExpenses:"Financial Income and Expenses",grossProfit:"Gross Profit",earningsBeforeTaxes:"Earnings before taxes",incomeTaxes:"Income Taxes for the year",operatingResult:"Operating Result",previousYearLoss:"Previous Year Loss",balanceSheet:"Balance Sheet",assets:"ASSETS",totalFixedAssets:"Total Fixed Assets",totalWorkingCapital:"Total Working Capital",totalAssets:"Total Assets",liabilities:"LIABILITIES",totalEquity:"Total Equity",severancePay:"Severance Pay",debts:"Debts",totalLiability:"Total Liability",globalDistribution:"Global Distribution",htmlCode:"HTML Code",copyCode:"Copy Code",copied:"Copied!",italian:"Italian",english:"English",footer:"© 2023 Business Dashboard - Created with Chart.js and Tailwind CSS",salesUnits:"Sales (units)",revenueEuro:"Revenue (€)",preMoney:"Pre Money",postMoney:"Post Money"}};
+        let salesRevenueChart,currentView="annual",currentYear="2025",currentLanguage="en",currentMoneyType="pre";
+        
+        // Income Statement data for Pre Money
+        const preMoneyIncomeData = {
+            "2025": {
+                totalProductionValue: 1178247.27,
+                totalProductionCosts: 1266160.15,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: -104010.44,
+                earningsBeforeTaxes: -104010.44,
+                incomeTaxes: 0,
+                operatingResult: -104010.44
+            },
+            "2026": {
+                totalProductionValue: 1502962.00,
+                totalProductionCosts: 1392138.06,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 104010.44,
+                grossProfit: 94726.38,
+                earningsBeforeTaxes: -9284.06,
+                incomeTaxes: 0,
+                operatingResult: -9284.06
+            },
+            "2027": {
+                totalProductionValue: 1559359.60,
+                totalProductionCosts: 1460395.25,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 9284.06,
+                grossProfit: 82866.79,
+                earningsBeforeTaxes: 73582.73,
+                incomeTaxes: 21316.92,
+                operatingResult: 52265.81
+            },
+            "2028": {
+                totalProductionValue: 2393938.50,
+                totalProductionCosts: 2097026.30,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: 280814.64,
+                earningsBeforeTaxes: 280814.64,
+                incomeTaxes: 81352.00,
+                operatingResult: 199462.64
+            },
+            "2029": {
+                totalProductionValue: 3264517.65,
+                totalProductionCosts: 2609082.99,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: 639337.10,
+                earningsBeforeTaxes: 639337.10,
+                incomeTaxes: 185215.96,
+                operatingResult: 454121.14
+            }
+        };
+        
+        // Post Money data (placeholder - will be updated later)
+        const postMoneyIncomeData = {
+            "2025": {
+                totalProductionValue: 1178247.27 * 1.15,
+                totalProductionCosts: 1266160.15 * 1.1,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: (1178247.27 * 1.15) - (1266160.15 * 1.1) - 16097.56,
+                earningsBeforeTaxes: (1178247.27 * 1.15) - (1266160.15 * 1.1) - 16097.56,
+                incomeTaxes: 0,
+                operatingResult: (1178247.27 * 1.15) - (1266160.15 * 1.1) - 16097.56
+            },
+            "2026": {
+                totalProductionValue: 1502962.00 * 1.15,
+                totalProductionCosts: 1392138.06 * 1.1,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: 0,
+                earningsBeforeTaxes: 0,
+                incomeTaxes: 0,
+                operatingResult: 0
+            },
+            "2027": {
+                totalProductionValue: 1559359.60 * 1.15,
+                totalProductionCosts: 1460395.25 * 1.1,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: 0,
+                earningsBeforeTaxes: 0,
+                incomeTaxes: 0,
+                operatingResult: 0
+            },
+            "2028": {
+                totalProductionValue: 2393938.50 * 1.15,
+                totalProductionCosts: 2097026.30 * 1.1,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: 0,
+                earningsBeforeTaxes: 0,
+                incomeTaxes: 0,
+                operatingResult: 0
+            },
+            "2029": {
+                totalProductionValue: 3264517.65 * 1.15,
+                totalProductionCosts: 2609082.99 * 1.1,
+                financialIncomeExpenses: 16097.56,
+                previousYearLoss: 0,
+                grossProfit: 0,
+                earningsBeforeTaxes: 0,
+                incomeTaxes: 0,
+                operatingResult: 0
+            }
+        };
+        
+        const preMoneyData={quarterlySalesData:{"2025":[818,850,556,1049],"2026":[956,997,650,1224],"2027":[1000,1040,680,1280],"2028":[1531,1592,1041,1961],"2029":[2059,2141,1400,2635]},annualSalesData:{},annualRevenueData:{},yearData:{}},postMoneyData={quarterlySalesData:{"2025":[942,980,641,1208],"2026":[1230,1282,836,1575],"2027":[2050,2132,1397,2624],"2028":[3113,3237,2117,3986],"2029":[4165,4331,2833,5330]},annualSalesData:{},annualRevenueData:{},yearData:{}};
+        function initializeData(){
+            // Update translations
+            translations.it.sgr = "Crescita delle Vendite";
+            translations.en.sgr = "SGR";
+            translations.it.rcrDescription = "Quantità di materiale\nriciclato nel prodotto";
+            translations.en.rcrDescription = "Amount of recycled\nmaterial in the product";
+            
+            // Set initial language
+            updateTranslations();
+            
+            let e=0,t=0;
+            for(const a in preMoneyData.quarterlySalesData){
+                const n=preMoneyData.quarterlySalesData[a].reduce((e,t)=>e+t,0);
+                preMoneyData.annualSalesData[a]=n,e+=n,preMoneyData.annualRevenueData[a]=n*UNIT_PRICE,t+=preMoneyData.annualRevenueData[a]
+            }
+            let a=0,n=0;
+            for(const e in postMoneyData.quarterlySalesData){
+                const t=postMoneyData.quarterlySalesData[e].reduce((e,t)=>e+t,0);
+                postMoneyData.annualSalesData[e]=t,a+=t,postMoneyData.annualRevenueData[e]=t*UNIT_PRICE,n+=postMoneyData.annualRevenueData[e]
+            }
+            const r={2025:-61.62,2026:36.76,2027:37.47,2028:65.4,2029:130.19},s={2025:-57.47,2026:-5.41,2027:16.7,2028:38.23,2029:49.17};
+            let o=null,i=null,l=null,d=null;
+            const c=Object.keys(preMoneyData.annualSalesData);
+            for(let e=0;e<c.length;e++){
+                const t=c[e],a=preMoneyData.annualSalesData[t],n=preMoneyData.annualRevenueData[t],u=r[t],p=s[t];
+                let m=null,y=null;
+                if(e>0){
+                    const n=c[e-1],r=preMoneyData.annualSalesData[n];
+                    m=Math.round((a-r)/r*100),y=(a-r)/r*100
+                }
+                const h=i?Math.round((n-i)/i*100):null,g=null!==l?u-l:null,v=null!==d?p-d:null;
+                preMoneyData.yearData[t]={sales:a,revenue:n,roi:u,roe:p,sgr:y,salesGrowth:m,revenueGrowth:h,roiGrowth:g,roeGrowth:v,income: preMoneyIncomeData[t],
+                balance: {
+                    totalFixedAssets: t === "2025" ? 159083.17 :
+                                     t === "2026" ? 257660.89 :
+                                     t === "2027" ? 206767.50 :
+                                     t === "2028" ? 405979.80 :
+                                     467669.77,
+                    totalWorkingCapital: t === "2025" ? 104605.52 :
+                                       t === "2026" ? 16101.73 :
+                                       t === "2027" ? 158267.14 :
+                                       t === "2028" ? 243229.53 :
+                                       668850.67,
+                    totalEquity: t === "2025" ? 180989.56 :
+                               t === "2026" ? 171705.50 :
+                               t === "2027" ? 312981.76 :
+                               t === "2028" ? 521728.45 :
+                               923583.78,
+                    severancePay: t === "2025" ? 18313.33 :
+                                t === "2026" ? 18768.89 :
+                                t === "2027" ? 19862.22 :
+                                t === "2028" ? 31387.78 :
+                                32936.67,
+                    debts: t === "2025" ? 64385.79 :
+                          t === "2026" ? 83288.33 :
+                          t === "2027" ? 32190.67 :
+                          t === "2028" ? 96093.11 :
+                          180000.00,
+                    get totalAssets() {
+                        return this.totalFixedAssets + this.totalWorkingCapital;
+                    },
+                    get totalLiability() {
+                        return this.totalEquity + this.severancePay + this.debts;
+                    }
+                }},o=a,i=n,l=u,d=p
+            }
+            o=null,i=null,l=null,d=null;
+            for(let e=0;e<c.length;e++){
+                const t=c[e],a=postMoneyData.annualSalesData[t],n=postMoneyData.annualRevenueData[t],r=12.5+1.25*(parseInt(t)-2025),s=15+1.5*(parseInt(t)-2025);
+                let u=null,p=null;
+                if(e>0){
+                    const n=c[e-1],r=postMoneyData.annualSalesData[n];
+                    u=Math.round((a-r)/r*100),p=(a-r)/r*100
+                }
+                const m=i?Math.round((n-i)/i*100):null,y=null!==l?r-l:null,h=null!==d?s-d:null;
+                postMoneyData.yearData[t]={sales:a,revenue:n,roi:r,roe:s,sgr:p,salesGrowth:u,revenueGrowth:m,roiGrowth:y,roeGrowth:h,income: postMoneyIncomeData[t],
+                balance:{
+                    totalFixedAssets: t === "2025" ? 343045.13 :
+                                     t === "2026" ? 392668.09 :
+                                     t === "2027" ? 773939.64 :
+                                     t === "2028" ? 1551001.75 :
+                                     2078224.73,
+                    totalWorkingCapital: t === "2025" ? 352708.21 :
+                                       t === "2026" ? 319427.94 :
+                                       t === "2027" ? 275347.97 :
+                                       t === "2028" ? 204268.50 :
+                                       158028.09,
+                    totalEquity: t === "2025" ? 283200.00 :
+                               t === "2026" ? 316273.81 :
+                               t === "2027" ? 671836.49 :
+                               t === "2028" ? 1385666.92 :
+                               2188920.59,
+                    severancePay: t === "2025" ? 18313.33 :
+                                t === "2026" ? 23142.22 :
+                                t === "2027" ? 26331.11 :
+                                t === "2028" ? 40043.33 :
+                                47332.22,
+                    debts: t === "2025" ? 394240.00 :
+                          t === "2026" ? 372680.00 :
+                          t === "2027" ? 351120.00 :
+                          t === "2028" ? 329560.00 :
+                          0.00,
+                    get totalAssets() {
+                        return this.totalFixedAssets + this.totalWorkingCapital;
+                    },
+                    get totalLiability() {
+                        return this.totalEquity + this.severancePay + this.debts;
+                    }
+                }},o=a,i=n,l=r,d=s
+            }
+            preMoneyData.totalSales=e,preMoneyData.totalRevenue=t,preMoneyData.salesGrowth=Math.round((preMoneyData.annualSalesData[2029]-preMoneyData.annualSalesData[2025])/preMoneyData.annualSalesData[2025]*100),postMoneyData.totalSales=a,postMoneyData.totalRevenue=n,postMoneyData.salesGrowth=Math.round((postMoneyData.annualSalesData[2029]-postMoneyData.annualSalesData[2025])/postMoneyData.annualSalesData[2025]*100),preMoneyData.salesData={annual:{labels:Object.keys(preMoneyData.annualSalesData),sales:Object.values(preMoneyData.annualSalesData),revenue:Object.values(preMoneyData.annualRevenueData)},quarterly:{labels:[].concat(...Object.keys(preMoneyData.quarterlySalesData).map(e=>["Q1","Q2","Q3","Q4"].map(t=>`${t} ${e}`))),sales:[].concat(...Object.values(preMoneyData.quarterlySalesData)),revenue:[].concat(...Object.keys(preMoneyData.quarterlySalesData).map(e=>preMoneyData.quarterlySalesData[e].map(e=>e*UNIT_PRICE)))}},postMoneyData.salesData={annual:{labels:Object.keys(postMoneyData.annualSalesData),sales:Object.values(postMoneyData.annualSalesData),revenue:Object.values(postMoneyData.annualRevenueData)},quarterly:{labels:[].concat(...Object.keys(postMoneyData.quarterlySalesData).map(e=>["Q1","Q2","Q3","Q4"].map(t=>`${t} ${e}`))),sales:[].concat(...Object.values(postMoneyData.quarterlySalesData)),revenue:[].concat(...Object.keys(postMoneyData.quarterlySalesData).map(e=>postMoneyData.quarterlySalesData[e].map(e=>e*UNIT_PRICE)))}}
+        }
+        const formatCurrency=e=>new Intl.NumberFormat("it"===currentLanguage?"it-IT":"en-US",{style:"currency",currency:"EUR"}).format(e),formatNumber=e=>new Intl.NumberFormat("it"===currentLanguage?"it-IT":"en-US").format(e),formatCompactCurrency=e=>{if(e>=1e6){const t=e/1e6;return"€"+(t%1==0?t.toFixed(0):t.toFixed(1))+"M"}if(e>=1e3){const t=e/1e3;return"€"+(t%1==0?t.toFixed(0):t.toFixed(1))+"K"}return"€"+e.toFixed(0)};
+        function getCurrentData(){return"pre"===currentMoneyType?preMoneyData:postMoneyData}
+        function updateYearData(e){e!==currentYear&&(document.getElementById("yearDataContainer").classList.remove("fade-in"),document.getElementById("yearDataContainer").classList.add("fade-out"),setTimeout(()=>{currentYear=e,updateYearDataDisplay(),document.getElementById("yearDataContainer").classList.remove("fade-out"),document.getElementById("yearDataContainer").classList.add("fade-in")},300))}
+        function updateYearDataDisplay(){
+            const e=getCurrentData(),t=e.yearData[currentYear];
+            console.log("Updating Income Statement for year:", currentYear, t.income);
+            console.log("Gross Profit:", t.income.grossProfit);
+            console.log("Earnings Before Taxes:", t.income.earningsBeforeTaxes);
+            console.log("Income Taxes:", t.income.incomeTaxes);
+            console.log("Operating Result:", t.income.operatingResult);
+
+            // Update Sales and Revenue
+            document.getElementById("yearSales").textContent = formatNumber(t.sales);
+            document.getElementById("yearRevenue").textContent = formatCurrency(t.revenue);
+
+            // Update Sales Growth subtitle
+            const salesGrowthElement = document.getElementById("yearSalesGrowth");
+            if (t.salesGrowth !== null) {
+                const salesGrowthValue = t.salesGrowth.toFixed(2);
+                const isPositive = t.salesGrowth > 0;
+                salesGrowthElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? "up" : "down"} mr-1 ${isPositive ? "trend-up" : "trend-down"}"></i>
+                    <span class="text-sm font-medium ${isPositive ? "trend-up" : "trend-down"}">${isPositive ? "+" : ""}${salesGrowthValue}%</span>
+                    <span class="growth-label">${translations[currentLanguage].vsPrevYear}</span>`;
+            } else {
+                salesGrowthElement.innerHTML = `<span class="text-sm font-medium text-gray-600">${translations[currentLanguage].baseYear}</span>`;
+            }
+
+            // Update Revenue Growth subtitle
+            const revenueGrowthElement = document.getElementById("yearRevenueGrowth");
+            if (t.revenueGrowth !== null) {
+                const revenueGrowthValue = t.revenueGrowth.toFixed(2);
+                const isPositive = t.revenueGrowth > 0;
+                revenueGrowthElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? "up" : "down"} mr-1 ${isPositive ? "trend-up" : "trend-down"}"></i>
+                    <span class="text-sm font-medium ${isPositive ? "trend-up" : "trend-down"}">${isPositive ? "+" : ""}${revenueGrowthValue}%</span>
+                    <span class="growth-label">${translations[currentLanguage].vsPrevYear}</span>`;
+            } else {
+                revenueGrowthElement.innerHTML = `<span class="text-sm font-medium text-gray-600">${translations[currentLanguage].baseYear}</span>`;
+            }
+
+            // Update ROI and ROE values
+            document.getElementById("yearROI").textContent = t.roi.toFixed(2) + "%";
+            document.getElementById("yearROE").textContent = t.roe.toFixed(2) + "%";
+
+            // Update ROI Growth subtitle
+            const roiGrowthElement = document.getElementById("yearROIGrowth");
+            if (t.roiGrowth !== null) {
+                const roiGrowthValue = t.roiGrowth.toFixed(2);
+                const isPositive = t.roiGrowth > 0;
+                roiGrowthElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? "up" : "down"} mr-1 ${isPositive ? "trend-up" : "trend-down"}"></i>
+                    <span class="text-sm font-medium ${isPositive ? "trend-up" : "trend-down"}">${isPositive ? "+" : ""}${roiGrowthValue}%</span>
+                    <span class="growth-label">${translations[currentLanguage].vsPrevYear}</span>`;
+            } else {
+                roiGrowthElement.innerHTML = `<span class="text-sm font-medium text-gray-600">${translations[currentLanguage].baseYear}</span>`;
+            }
+
+            // Update ROE Growth subtitle
+            const roeGrowthElement = document.getElementById("yearROEGrowth");
+            if (t.roeGrowth !== null) {
+                const roeGrowthValue = t.roeGrowth.toFixed(2);
+                const isPositive = t.roeGrowth > 0;
+                roeGrowthElement.innerHTML = `<i class="fas fa-arrow-${isPositive ? "up" : "down"} mr-1 ${isPositive ? "trend-up" : "trend-down"}"></i>
+                    <span class="text-sm font-medium ${isPositive ? "trend-up" : "trend-down"}">${isPositive ? "+" : ""}${roeGrowthValue}%</span>
+                    <span class="growth-label">${translations[currentLanguage].vsPrevYear}</span>`;
+            } else {
+                roeGrowthElement.innerHTML = `<span class="text-sm font-medium text-gray-600">${translations[currentLanguage].baseYear}</span>`;
+            }
+
+            // Calculate and update SGR (Sales Growth Rate)
+            const years = Object.keys(e.yearData).sort();
+            const currentYearIndex = years.indexOf(currentYear);
+            let sgrValue = null;
+            if (currentYearIndex > 0) {
+                const prevYear = years[currentYearIndex - 1];
+                const prevSales = e.yearData[prevYear].sales;
+                sgrValue = ((t.sales - prevSales) / prevSales) * 100;
+            }
+            const sgrElement = document.getElementById("yearSGR");
+            const sgrGrowthElement = document.getElementById("yearSGRGrowth");
+            if (sgrValue !== null) {
+                sgrElement.textContent = sgrValue.toFixed(2) + "%";
+                sgrGrowthElement.innerHTML = `<span class="text-sm font-medium text-gray-600">${translations[currentLanguage].vsPrevYear}</span>`;
+            } else {
+                sgrElement.textContent = "N/A";
+                sgrGrowthElement.innerHTML = `<span class="text-sm font-medium text-gray-600">${translations[currentLanguage].baseYear}</span>`;
+            }
+
+            // Update Income Statement (unchanged)
+            const grossProfitElement = document.getElementById("grossProfit");
+            if(!grossProfitElement) {
+                console.error("Element with id 'grossProfit' not found!");
+            } else {
+                grossProfitElement.textContent = formatCurrency(t.income.grossProfit);
+                document.getElementById("grossProfitItem").style.display = "flex";
+            }
+
+            const earningsBeforeTaxesElement = document.getElementById("earningsBeforeTaxes");
+            if(!earningsBeforeTaxesElement) {
+                console.error("Element with id 'earningsBeforeTaxes' not found!");
+            } else {
+                earningsBeforeTaxesElement.textContent = formatCurrency(t.income.earningsBeforeTaxes);
+                document.getElementById("earningsBeforeTaxesItem").style.display = "flex";
+            }
+
+            const incomeTaxesElement = document.getElementById("incomeTaxes");
+            if(!incomeTaxesElement) {
+                console.error("Element with id 'incomeTaxes' not found!");
+            } else {
+                incomeTaxesElement.textContent = formatCurrency(t.income.incomeTaxes);
+                document.getElementById("incomeTaxesItem").style.display = "flex";
+            }
+
+            // Show or hide previous year loss row
+            if (t.income.previousYearLoss > 0) {
+                document.getElementById("previousYearLossItem").style.display = "flex";
+                document.getElementById("previousYearLoss").textContent = formatCurrency(t.income.previousYearLoss);
+            } else {
+                document.getElementById("previousYearLossItem").style.display = "none";
+            }
+
+            const operatingResult = document.getElementById("operatingResult");
+            const operatingResultValue = document.getElementById("operatingResultValue");
+
+            if(!operatingResult || !operatingResultValue) {
+                console.error("Operating result elements not found!");
+            } else {
+                if (t.income.operatingResult >= 0) {
+                    operatingResult.classList.remove("loss");
+                    operatingResult.classList.add("profit");
+                    operatingResultValue.textContent = formatCurrency(t.income.operatingResult);
+                } else {
+                    operatingResult.classList.remove("profit");
+                    operatingResult.classList.add("loss");
+                    operatingResultValue.textContent = formatCurrency(t.income.operatingResult);
+                }
+                document.getElementById("operatingResultItem").style.display = "flex";
+            }
+
+            // Update other Income Statement fields
+            const totalProductionValueElement = document.getElementById("totalProductionValue");
+            if(totalProductionValueElement) {
+                totalProductionValueElement.textContent = formatCurrency(t.income.totalProductionValue);
+            }
+            const totalProductionCostsElement = document.getElementById("totalProductionCosts");
+            if(totalProductionCostsElement) {
+                totalProductionCostsElement.textContent = formatCurrency(t.income.totalProductionCosts);
+            }
+            const financialIncomeExpensesElement = document.getElementById("financialIncomeExpenses");
+            if(financialIncomeExpensesElement) {
+                financialIncomeExpensesElement.textContent = formatCurrency(t.income.financialIncomeExpenses);
+            }
+
+            // Update Balance Sheet
+            document.getElementById("totalFixedAssets").textContent=formatCurrency(t.balance.totalFixedAssets);
+            document.getElementById("totalWorkingCapital").textContent=formatCurrency(t.balance.totalWorkingCapital);
+            document.getElementById("balanceTotalAssets").textContent=formatCurrency(t.balance.totalAssets);
+            document.getElementById("totalEquity").textContent=formatCurrency(t.balance.totalEquity);
+            document.getElementById("severancePay").textContent=formatCurrency(t.balance.severancePay);
+            document.getElementById("debts").textContent=formatCurrency(t.balance.debts);
+            document.getElementById("balanceTotalLiability").textContent=formatCurrency(t.balance.totalLiability);
+
+            document.getElementById("distributionText").textContent="it"===currentLanguage?distributionData[currentYear]:distributionDataEN[currentYear],document.querySelectorAll(".map-year").forEach(e=>{e.classList.remove("active")}),document.getElementById(`map${currentYear}`).classList.add("active")
+        }
+        function updateDashboard(){
+            const e=getCurrentData();
+            document.getElementById("totalSales").textContent=formatNumber(e.totalSales),document.getElementById("totalRevenue").textContent=formatCurrency(e.totalRevenue),document.getElementById("salesGrowth").textContent="+"+e.salesGrowth+"%",updateYearDataDisplay(),updateChart()
+        }
+        function updateChart(){
+            const e=getCurrentData(),t=e.salesData[currentView];
+            salesRevenueChart?(salesRevenueChart.data.labels=t.labels,salesRevenueChart.data.datasets[0].data=t.sales,salesRevenueChart.data.datasets[1].data=t.revenue,salesRevenueChart.update()):createChart(t)
+        }
+        function createChart(e){
+            const canvas = document.getElementById("salesRevenueChart");
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            
+            const t = canvas.getContext("2d");
+            Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+            
+            requestAnimationFrame(() => {
+                salesRevenueChart = new Chart(t,{
+                    type:"bar",
+                    data:{
+                        labels:e.labels,
+                        datasets:[
+                            {
+                                label:translations[currentLanguage].salesUnits,
+                                data:e.sales,
+                                backgroundColor:"rgba(59, 130, 246, 0.7)",
+                                borderColor:"rgba(59, 130, 246, 1)",
+                                borderWidth:1,
+                                borderRadius:4,
+                                yAxisID:"y"
+                            },
+                            {
+                                label:translations[currentLanguage].revenueEuro,
+                                data:e.revenue,
+                                backgroundColor:"rgba(249, 115, 22, 0.7)",
+                                borderColor:"rgba(249, 115, 22, 1)",
+                                borderWidth:1,
+                                borderRadius:4,
+                                type:"line",
+                                yAxisID:"y1"
+                            }
+                        ]
+                    },
+                    options:{
+                        responsive:!0,
+                        maintainAspectRatio:!1,
+                        onResize:function(chart,size){
+                            chart.resize();
+                        },
+                        interaction:{
+                            mode:"index",
+                            intersect:!1
+                        },
+                        plugins:{
+                            legend:{
+                                position:"top",
+                                labels:{
+                                    usePointStyle:!0,
+                                    boxWidth:8
+                                }
+                            },
+                            tooltip:{
+                                callbacks:{
+                                    label:function(e){
+                                        let t=e.dataset.label||"";
+                                        return t&&(t+=": "),0===e.datasetIndex?t+=formatNumber(e.raw):t+=formatCurrency(e.raw),t
+                                    }
+                                }
+                            }
+                        },
+                        scales:{
+                            x:{
+                                grid:{
+                                    display:!1
+                                }
+                            },
+                            y:{
+                                type:"linear",
+                                display:!0,
+                                position:"left",
+                                title:{
+                                    display:!0,
+                                    text:translations[currentLanguage].salesUnits,
+                                    color:"rgba(59, 130, 246, 1)"
+                                },
+                                grid:{
+                                    borderDash:[2,2]
+                                },
+                                ticks:{
+                                    callback:function(e){
+                                        return formatNumber(e)
+                                    },
+                                    color:"rgba(59, 130, 246, 1)"
+                                }
+                            },
+                            y1:{
+                                type:"linear",
+                                display:!0,
+                                position:"right",
+                                title:{
+                                    display:!0,
+                                    text:translations[currentLanguage].revenueEuro,
+                                    color:"rgba(249, 115, 22, 1)"
+                                },
+                                grid:{
+                                    display:!1
+                                },
+                                ticks:{
+                                    callback:function(e){
+                                        return formatCompactCurrency(e)
+                                    },
+                                    color:"rgba(249, 115, 22, 1)"
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        function updateTranslations(){
+            document.querySelectorAll("[data-translate]").forEach(e=>{const t=e.getAttribute("data-translate");translations[currentLanguage][t]&&(e.textContent=translations[currentLanguage][t])}),document.querySelectorAll("[data-translate-placeholder]").forEach(e=>{const t=e.getAttribute("data-translate-placeholder");translations[currentLanguage][t]&&(e.placeholder=translations[currentLanguage][t])}),salesRevenueChart&&(salesRevenueChart.data.datasets[0].label=translations[currentLanguage].salesUnits,salesRevenueChart.data.datasets[1].label=translations[currentLanguage].revenueEuro,salesRevenueChart.options.scales.y.title.text=translations[currentLanguage].salesUnits,salesRevenueChart.options.scales.y1.title.text=translations[currentLanguage].revenueEuro,salesRevenueChart.update()),document.getElementById("distributionText").textContent="it"===currentLanguage?distributionData[currentYear]:distributionDataEN[currentYear]
+        }
+        function updateCodeTextarea() {
+            const htmlCode = document.documentElement.outerHTML;
+            document.getElementById('codeTextarea').value = htmlCode;
+        }
+        document.addEventListener("DOMContentLoaded",function(){
+            initializeData(),
+            document.getElementById("annualBtn").addEventListener("click",function(){document.getElementById("annualBtn").classList.add("btn-blue"),document.getElementById("annualBtn").classList.remove("btn-default"),document.getElementById("quarterlyBtn").classList.add("btn-default"),document.getElementById("quarterlyBtn").classList.remove("btn-blue"),currentView="annual",updateChart()}),
+            document.getElementById("quarterlyBtn").addEventListener("click",function(){document.getElementById("quarterlyBtn").classList.add("btn-blue"),document.getElementById("quarterlyBtn").classList.remove("btn-default"),document.getElementById("annualBtn").classList.add("btn-default"),document.getElementById("annualBtn").classList.remove("btn-blue"),currentView="quarterly",updateChart()}),
+            document.querySelectorAll(".year-option").forEach(e=>{
+                e.addEventListener("click",function(){
+                    const year = this.getAttribute("data-year");
+                    const color = this.getAttribute("data-color");
+                    
+                    // Update all year selectors
+                    document.querySelectorAll(".year-option").forEach(opt => {
+                        opt.classList.remove("active-blue");
+                        opt.classList.remove("active-orange");
+                        if(opt.getAttribute("data-year") === year) {
+                            opt.classList.add(`active-${color}`);
+                        }
+                    });
+                    
+                    updateYearData(year);
+                })
+            })
+            document.getElementById("globeIcon").addEventListener("click",function(){document.getElementById("languageDropdown").classList.toggle("show")}),
+            document.querySelectorAll(".flag-option").forEach(e=>{e.addEventListener("click",function(){document.querySelectorAll(".flag-option").forEach(e=>{e.classList.remove("active")}),this.classList.add("active");const e=this.getAttribute("data-lang");e!==currentLanguage&&(currentLanguage=e,updateTranslations(),updateYearDataDisplay()),document.getElementById("languageDropdown").classList.remove("show")})}),
+            document.getElementById("preMoneyToggle").addEventListener("click",function(){"pre"!==currentMoneyType&&(document.getElementById("preMoneyToggle").classList.add("active"),document.getElementById("postMoneyToggle").classList.remove("active"),document.getElementById("dashboardContent").classList.remove("fade-in"),document.getElementById("dashboardContent").classList.add("fade-out"),setTimeout(()=>{currentMoneyType="pre",updateDashboard(),document.getElementById("dashboardContent").classList.remove("fade-out"),document.getElementById("dashboardContent").classList.add("fade-in")},300))}),
+            document.getElementById("postMoneyToggle").addEventListener("click",function(){"post"!==currentMoneyType&&(document.getElementById("postMoneyToggle").classList.add("active"),document.getElementById("preMoneyToggle").classList.remove("active"),document.getElementById("dashboardContent").classList.remove("fade-in"),document.getElementById("dashboardContent").classList.add("fade-out"),setTimeout(()=>{currentMoneyType="post",updateDashboard(),document.getElementById("dashboardContent").classList.remove("fade-out"),document.getElementById("dashboardContent").classList.add("fade-in")},300))}),
+            document.getElementById("copyBtn").addEventListener("click", function() {
+                const codeTextarea = document.getElementById("codeTextarea");
+                codeTextarea.select();
+                document.execCommand("copy");
+                const copyBtn = document.getElementById("copyBtn");
+                const originalText = copyBtn.innerHTML;
+                copyBtn.classList.add("copy-success");
+                copyBtn.innerHTML = `<i class="fas fa-check"></i><span data-translate="copied">${translations[currentLanguage].copied}</span>`;
+                setTimeout(() => {
+                    copyBtn.classList.remove("copy-success");
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            }),
+            updateDashboard(),
+            updateCodeTextarea(),
+            document.addEventListener("click",function(e){const t=document.getElementById("languageSelector"),a=document.getElementById("languageDropdown");t.contains(e.target)||!a.classList.contains("show")||a.classList.remove("show")})
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94b88365935eea69',t:'MTc0OTIxOTIzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe>
+
+</body></html>
