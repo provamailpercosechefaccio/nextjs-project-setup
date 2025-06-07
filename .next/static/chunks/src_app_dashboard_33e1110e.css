@@ -1,0 +1,223 @@
+/* [project]/src/app/dashboard.css [app-client] (css) */
+body {
+  background-color: #f8fafc;
+  font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard-card, .kpi-card {
+  background-color: #fff;
+  border-radius: .75rem;
+  transition: all .3s;
+  box-shadow: 0 4px 6px -1px #0000001a, 0 2px 4px -1px #0000000f;
+}
+
+.dashboard-card:hover, .kpi-card:hover, .data-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px #0000001a, 0 4px 6px -2px #0000000d;
+}
+
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-icon-wrapper {
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  display: flex;
+}
+
+.kpi-icon {
+  font-size: 1rem;
+}
+
+.trend-up {
+  color: #10b981;
+}
+
+.trend-down {
+  color: #ef4444;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  min-height: 400px;
+  display: block;
+  position: relative;
+}
+
+.time-period-selector {
+  gap: .5rem;
+  margin-bottom: 1rem;
+  display: flex;
+}
+
+.financial-result {
+  border-radius: .5rem;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+}
+
+.financial-result.profit {
+  color: #10b981;
+  background-color: #10b9811a;
+}
+
+.financial-result.loss {
+  color: #ef4444;
+  background-color: #ef44441a;
+}
+
+.language-selector {
+  z-index: 50;
+  position: relative;
+}
+
+.language-dropdown {
+  z-index: 50;
+  background-color: #fff;
+  border-radius: .75rem;
+  min-width: 120px;
+  padding: .75rem;
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 10px 15px -3px #0000001a, 0 4px 6px -2px #0000000d;
+}
+
+.language-dropdown.show {
+  justify-content: center;
+  gap: .75rem;
+  display: flex;
+}
+
+.flag-option {
+  cursor: pointer;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  padding: .25rem;
+  transition: all .2s;
+  display: flex;
+}
+
+.flag-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px #0000001a;
+}
+
+.flag-option.active {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.flag-icon {
+  object-fit: cover;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 1px 2px #0000001a;
+}
+
+.dashboard-content, .year-data-container {
+  transition: opacity .3s, transform .3s;
+}
+
+.dashboard-content.fade-out, .year-data-container.fade-out {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.dashboard-content.fade-in, .year-data-container.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dashboard-header {
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  display: flex;
+}
+
+.header-title {
+  text-align: left;
+  flex-grow: 0;
+}
+
+.header-controls {
+  align-items: center;
+  gap: 1rem;
+  display: flex;
+}
+
+.money-toggle-container {
+  background-color: #f3f4f6;
+  border-radius: .75rem;
+  align-items: center;
+  gap: .75rem;
+  padding: .25rem;
+  display: flex;
+}
+
+.money-toggle-label {
+  color: #4b5563;
+  cursor: pointer;
+  border-radius: .5rem;
+  padding: .25rem .75rem;
+  font-size: .875rem;
+  font-weight: 500;
+  transition: all .3s;
+}
+
+.money-toggle-label.active[data-money-type="pre"] {
+  color: #fff;
+  background-color: #3b82f6;
+  box-shadow: 0 2px 4px #3b82f64d;
+}
+
+.money-toggle-label.active[data-money-type="post"] {
+  color: #fff;
+  background-color: #f97316;
+  box-shadow: 0 2px 4px #f973164d;
+}
+
+@media (width <= 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-controls {
+    justify-content: flex-end;
+    width: 100%;
+  }
+}
+
+@media (width <= 640px) {
+  .header-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .money-toggle-container {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+
+/*# sourceMappingURL=src_app_dashboard_33e1110e.css.map*/
